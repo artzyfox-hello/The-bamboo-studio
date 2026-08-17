@@ -1,7 +1,7 @@
 // --- DOM Elements ---
 const authBox = document.getElementById('authBox');
 const studioBox = document.getElementById('studioBox');
-const scheduleBox = document.getElementById('scheduleBox');
+const paymentBox = document.getElementById('paymentBox');
 const authForm = document.getElementById('authForm');
 const authTitle = document.getElementById('authTitle');
 const authSubmitBtn = document.getElementById('authSubmitBtn');
@@ -11,39 +11,25 @@ const signUpFields = document.getElementById('signUpFields');
 const displayName = document.getElementById('displayName');
 const displayPronouns = document.getElementById('displayPronouns');
 const tierBadge = document.getElementById('tierBadge');
+const trialCountdown = document.getElementById('trialCountdown');
 const logoutBtn = document.getElementById('logoutBtn');
 
 const videoCanvas = document.getElementById('videoCanvas');
 const videoElement = document.getElementById('webcam');
 const subtitleElement = document.getElementById('subtitles');
-const startCamBtn = document.getElementById('startCamBtn');
-const shareScreenBtn = document.getElementById('shareScreenBtn');
 
-const lessonCodeInput = document.getElementById('lessonCodeInput');
-const joinLessonBtn = document.getElementById('joinLessonBtn');
+// Master Security Passcode for Staff Registration
+const TEACHER_SECRET = "bambooteacher15";
 
 let isSignUpMode = false;
 let currentUser = null;
-let cameraStream = null;
 
-// Mock Schedule Database for Lesson Codes
-const scheduledLessons = {
-  "LESSON-101": { isOpen: true, title: "Beginner D-Key Dizi Basics", scheduledTime: "Live Now" },
-  "LESSON-102": { isOpen: false, title: "Jianpu Sight-Reading Workshop", scheduledTime: "4:00 PM CDT" }
-};
-
-// Mock Room Capacity Trackers
-const roomState = {
-  solo: { name: "Solo Practice", maxCapacity: 1, currentCount: 0, type: "solo" },
-  group: { name: "Group Studio", maxCapacity: 5, currentCount: 4, type: "group" }
-};
-
-// --- 1. Toggle & Auth Form Handler ---
+// --- 1. Registration, Login & Passcode Logic ---
 
 toggleAuth.addEventListener('click', () => {
   isSignUpMode = !isSignUpMode;
-  authTitle.innerText = isSignUpMode ? "Sign Up & Create Profile" : "Sign In";
-  authSubmitBtn.innerText = isSignUpMode ? "Create Account & Enter" : "Log In";
+  authTitle.innerText = isSignUpMode ? "Sign Up & Start 30-Day Trial" : "Sign In";
+  authSubmitBtn.innerText = isSignUpMode ? "Create Account" : "Log In";
   toggleAuth.innerText = isSignUpMode ? "Already have an account? Log in" : "Need an account? Sign up";
   signUpFields.style.display = isSignUpMode ? "block" : "none";
 });
@@ -55,11 +41,25 @@ authForm.addEventListener('submit', (e) => {
   const password = document.getElementById('password').value.trim();
 
   if (isSignUpMode) {
-    // Check if user already exists
     if (localStorage.getItem('bamboo_user_' + username)) {
-      alert("Username already exists! Please choose another or log in.");
+      alert("Username already taken! Please choose another.");
       return;
     }
+
+    const teacherCodeEntered = document.getElementById('teacherCode').value.trim();
+    let assignedTier = document.getElementById('planTier').value;
+
+    // Verify Teacher Access Passcode
+    if (teacherCodeEntered.length > 0) {
+      if (teacherCodeEntered === TEACHER_SECRET) {
+        assignedTier = "teacher";
+      } else {
+        alert("Invalid Teacher Passcode. Registered as standard student.");
+      }
+    }
+
+    const now = new Date();
+    const trialEnd = new Date(now.getTime() + (30 * 24 * 60 * 60 * 1000)); // +30 Days
 
     currentUser = {
       username: username,
@@ -67,15 +67,17 @@ authForm.addEventListener('submit', (e) => {
       prefName: document.getElementById('prefName').value.trim() || username,
       pronouns: document.getElementById('pronouns').value.trim() || "they/them",
       age: document.getElementById('age').value || 18,
-      tier: document.getElementById('planTier').value
+      tier: assignedTier,
+      signUpDate: now.toISOString(),
+      trialEndDate: trialEnd.toISOString(),
+      isPaid: false
     };
 
     localStorage.setItem('bamboo_user_' + username, JSON.stringify(currentUser));
     localStorage.setItem('bamboo_active_session', username);
-    loadProfileUI(currentUser);
+    checkTrialAndRoute(currentUser);
 
   } else {
-    // Log In existing user
     const storedData = localStorage.getItem('bamboo_user_' + username);
 
     if (!storedData) {
@@ -91,153 +93,83 @@ authForm.addEventListener('submit', (e) => {
 
     currentUser = userData;
     localStorage.setItem('bamboo_active_session', username);
-    loadProfileUI(currentUser);
+    checkTrialAndRoute(currentUser);
   }
 });
 
-function loadProfileUI(user) {
+// --- 2. Trial Period & Payment Gate Routing ---
+
+function checkTrialAndRoute(user) {
+  authBox.style.display = 'none';
+
+  // Teachers skip trial limits
+  if (user.tier === 'teacher' || user.isPaid) {
+    loadStudioUI(user);
+    return;
+  }
+
+  const now = new Date();
+  const trialExpiration = new Date(user.trialEndDate);
+
+  if (now > trialExpiration && user.tier !== 'visitor') {
+    // Trial expired -> show Plan Payment Gate
+    paymentBox.style.display = 'block';
+    studioBox.style.display = 'none';
+  } else {
+    // Active trial
+    const daysLeft = Math.ceil((trialExpiration - now) / (1000 * 60 * 60 * 24));
+    trialCountdown.innerText = `30-Day Free Trial: ${daysLeft} days remaining`;
+    loadStudioUI(user);
+  }
+}
+
+function selectPlanPayment(selectedTier) {
+  currentUser.tier = selectedTier;
+  currentUser.isPaid = true; // Mark account as active paid plan
+
+  localStorage.setItem('bamboo_user_' + currentUser.username, JSON.stringify(currentUser));
+  alert(`Plan updated to ${selectedTier}! Routing to Studio...`);
+
+  paymentBox.style.display = 'none';
+  loadStudioUI(currentUser);
+}
+
+function loadStudioUI(user) {
   displayName.innerText = user.prefName;
   displayPronouns.innerText = `(${user.pronouns})`;
   tierBadge.innerText = user.tier.replace('_', ' ');
   tierBadge.className = `badge badge-${user.tier}`;
 
-  authBox.style.display = 'none';
-  scheduleBox.style.display = 'none';
   studioBox.style.display = 'flex';
 }
 
 logoutBtn.addEventListener('click', () => {
   localStorage.removeItem('bamboo_active_session');
-  if (cameraStream) {
-    cameraStream.getTracks().forEach(track => track.stop());
-  }
   studioBox.style.display = 'none';
+  paymentBox.style.display = 'none';
   authBox.style.display = 'block';
   authForm.reset();
 });
 
-// Auto-login on page load if session exists
+// Auto-login on reload
 window.addEventListener('DOMContentLoaded', () => {
   const activeUser = localStorage.getItem('bamboo_active_session');
   if (activeUser) {
     const storedData = localStorage.getItem('bamboo_user_' + activeUser);
     if (storedData) {
       currentUser = JSON.parse(storedData);
-      loadProfileUI(currentUser);
+      checkTrialAndRoute(currentUser);
     }
   }
 });
 
-// --- 2. Meeting Room Access & Capacity Enforcement ---
+// --- 3. Room Access & Video Camera Functions ---
 
 function tryJoinRoom(roomId) {
-  const room = roomState[roomId];
-
-  if (!currentUser) return alert("Please log in first.");
-
-  // Visitor Tier Restriction: Cannot join group rooms
-  if (currentUser.tier === 'visitor' && room.type === 'group') {
-    alert("Visitor tier gives access to Solo Practice rooms and resources only. Upgrade your tier to join Group classes!");
+  if (currentUser.tier === 'visitor' && roomId === 'group') {
+    alert("Visitor tier provides access to Solo Practice rooms and resources only.");
     return;
   }
-
-  // Capacity Limit Check
-  if (room.currentCount >= room.maxCapacity) {
-    alert(`The ${room.name} is full! Maximum capacity is ${room.maxCapacity} participant(s).`);
-    return;
-  }
-
-  alert(`Joining ${room.name}...`);
+  alert(`Joining ${roomId} studio...`);
   videoCanvas.style.display = 'block';
-  startCamera();
 }
-
-// --- 3. Lesson Code & Scheduled Waiting Room Gate ---
-
-joinLessonBtn.addEventListener('click', () => {
-  const code = lessonCodeInput.value.trim().toUpperCase();
-  const lesson = scheduledLessons[code];
-
-  if (!lesson) {
-    alert("Lesson code not found. Please check your code!");
-    return;
-  }
-
-  if (lesson.isOpen) {
-    alert(`Joining ${lesson.title}!`);
-    videoCanvas.style.display = 'block';
-    startCamera();
-  } else {
-    // Show Schedule Waiting Room
-    studioBox.style.display = 'none';
-    document.getElementById('scheduleTitle').innerText = lesson.title;
-    document.getElementById('scheduleTime').innerText = `Scheduled Time: ${lesson.scheduledTime}`;
-    scheduleBox.style.display = 'block';
-  }
-});
-
-function backToStudio() {
-  scheduleBox.style.display = 'none';
-  studioBox.style.display = 'flex';
-}
-
-// --- 4. Camera, Screen Share & Subtitles ---
-
-startCamBtn.addEventListener('click', startCamera);
-
-async function startCamera() {
-  try {
-    cameraStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "user" },
-      audio: true
-    });
-    videoElement.srcObject = cameraStream;
-    await videoElement.play();
-    videoCanvas.style.display = 'block';
-    subtitleElement.innerText = "Camera active! Listening...";
-    startSpeech();
-  } catch (err) {
-    alert("Camera/Mic error: " + err.message);
-  }
-}
-
-function startSpeech() {
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognition) {
-    subtitleElement.innerText = "Camera connected! (Speech recognition not available)";
-    return;
-  }
-
-  const recognition = new SpeechRecognition();
-  recognition.continuous = true;
-  recognition.interimResults = true;
-  recognition.lang = 'en-US';
-
-  recognition.onresult = (event) => {
-    let transcript = '';
-    for (let i = event.resultIndex; i < event.results.length; i++) {
-      transcript += event.results[i][0].transcript;
-    }
-    subtitleElement.innerText = transcript;
-  };
-
-  recognition.start();
-}
-
-shareScreenBtn.addEventListener('click', async () => {
-  try {
-    const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-    videoElement.srcObject = screenStream;
-    await videoElement.play();
-    subtitleElement.innerText = "Sharing screen...";
-
-    screenStream.getVideoTracks()[0].onended = () => {
-      if (cameraStream) {
-        videoElement.srcObject = cameraStream;
-        subtitleElement.innerText = "Returned to webcam feed.";
-      }
-    };
-  } catch (err) {
-    console.error("Screen share canceled:", err);
-  }
-});
