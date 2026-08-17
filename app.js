@@ -3,6 +3,10 @@ const authBox = document.getElementById('authBox');
 const studioBox = document.getElementById('studioBox');
 const scheduleBox = document.getElementById('scheduleBox');
 const authForm = document.getElementById('authForm');
+const authTitle = document.getElementById('authTitle');
+const authSubmitBtn = document.getElementById('authSubmitBtn');
+const toggleAuth = document.getElementById('toggleAuth');
+const signUpFields = document.getElementById('signUpFields');
 
 const displayName = document.getElementById('displayName');
 const displayPronouns = document.getElementById('displayPronouns');
@@ -18,6 +22,7 @@ const shareScreenBtn = document.getElementById('shareScreenBtn');
 const lessonCodeInput = document.getElementById('lessonCodeInput');
 const joinLessonBtn = document.getElementById('joinLessonBtn');
 
+let isSignUpMode = false;
 let currentUser = null;
 let cameraStream = null;
 
@@ -33,21 +38,61 @@ const roomState = {
   group: { name: "Group Studio", maxCapacity: 5, currentCount: 4, type: "group" }
 };
 
-// --- 1. Registration & Profile Handler ---
+// --- 1. Toggle & Auth Form Handler ---
+
+toggleAuth.addEventListener('click', () => {
+  isSignUpMode = !isSignUpMode;
+  authTitle.innerText = isSignUpMode ? "Sign Up & Create Profile" : "Sign In";
+  authSubmitBtn.innerText = isSignUpMode ? "Create Account & Enter" : "Log In";
+  toggleAuth.innerText = isSignUpMode ? "Already have an account? Log in" : "Need an account? Sign up";
+  signUpFields.style.display = isSignUpMode ? "block" : "none";
+});
 
 authForm.addEventListener('submit', (e) => {
   e.preventDefault();
 
-  currentUser = {
-    username: document.getElementById('username').value.trim(),
-    prefName: document.getElementById('prefName').value.trim(),
-    pronouns: document.getElementById('pronouns').value.trim(),
-    age: document.getElementById('age').value,
-    tier: document.getElementById('planTier').value
-  };
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value.trim();
 
-  localStorage.setItem('bamboo_user_profile', JSON.stringify(currentUser));
-  loadProfileUI(currentUser);
+  if (isSignUpMode) {
+    // Check if user already exists
+    if (localStorage.getItem('bamboo_user_' + username)) {
+      alert("Username already exists! Please choose another or log in.");
+      return;
+    }
+
+    currentUser = {
+      username: username,
+      password: password,
+      prefName: document.getElementById('prefName').value.trim() || username,
+      pronouns: document.getElementById('pronouns').value.trim() || "they/them",
+      age: document.getElementById('age').value || 18,
+      tier: document.getElementById('planTier').value
+    };
+
+    localStorage.setItem('bamboo_user_' + username, JSON.stringify(currentUser));
+    localStorage.setItem('bamboo_active_session', username);
+    loadProfileUI(currentUser);
+
+  } else {
+    // Log In existing user
+    const storedData = localStorage.getItem('bamboo_user_' + username);
+
+    if (!storedData) {
+      alert("User not found. Please sign up first!");
+      return;
+    }
+
+    const userData = JSON.parse(storedData);
+    if (userData.password !== password) {
+      alert("Incorrect password.");
+      return;
+    }
+
+    currentUser = userData;
+    localStorage.setItem('bamboo_active_session', username);
+    loadProfileUI(currentUser);
+  }
 });
 
 function loadProfileUI(user) {
@@ -62,20 +107,24 @@ function loadProfileUI(user) {
 }
 
 logoutBtn.addEventListener('click', () => {
-  localStorage.removeItem('bamboo_user_profile');
+  localStorage.removeItem('bamboo_active_session');
   if (cameraStream) {
     cameraStream.getTracks().forEach(track => track.stop());
   }
   studioBox.style.display = 'none';
   authBox.style.display = 'block';
+  authForm.reset();
 });
 
-// Auto-login on reload
+// Auto-login on page load if session exists
 window.addEventListener('DOMContentLoaded', () => {
-  const savedProfile = localStorage.getItem('bamboo_user_profile');
-  if (savedProfile) {
-    currentUser = JSON.parse(savedProfile);
-    loadProfileUI(currentUser);
+  const activeUser = localStorage.getItem('bamboo_active_session');
+  if (activeUser) {
+    const storedData = localStorage.getItem('bamboo_user_' + activeUser);
+    if (storedData) {
+      currentUser = JSON.parse(storedData);
+      loadProfileUI(currentUser);
+    }
   }
 });
 
