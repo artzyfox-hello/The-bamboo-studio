@@ -1,89 +1,142 @@
-// DOM Elements
+// --- DOM Elements ---
 const authBox = document.getElementById('authBox');
 const studioBox = document.getElementById('studioBox');
+const scheduleBox = document.getElementById('scheduleBox');
 const authForm = document.getElementById('authForm');
-const authTitle = document.getElementById('authTitle');
-const authSubmitBtn = document.getElementById('authSubmitBtn');
-const toggleAuthMode = document.getElementById('toggleAuthMode');
-const userDisplay = document.getElementById('userDisplay');
+
+const displayName = document.getElementById('displayName');
+const displayPronouns = document.getElementById('displayPronouns');
+const tierBadge = document.getElementById('tierBadge');
 const logoutBtn = document.getElementById('logoutBtn');
 
+const videoCanvas = document.getElementById('videoCanvas');
 const videoElement = document.getElementById('webcam');
 const subtitleElement = document.getElementById('subtitles');
-const startBtn = document.getElementById('startBtn');
+const startCamBtn = document.getElementById('startCamBtn');
 const shareScreenBtn = document.getElementById('shareScreenBtn');
 
+const lessonCodeInput = document.getElementById('lessonCodeInput');
+const joinLessonBtn = document.getElementById('joinLessonBtn');
+
+let currentUser = null;
 let cameraStream = null;
-let isSignUp = false;
 
-// --- 1. Authentication Logic ---
+// Mock Schedule Database for Lesson Codes
+const scheduledLessons = {
+  "LESSON-101": { isOpen: true, title: "Beginner D-Key Dizi Basics", scheduledTime: "Live Now" },
+  "LESSON-102": { isOpen: false, title: "Jianpu Sight-Reading Workshop", scheduledTime: "4:00 PM CDT" }
+};
 
-toggleAuthMode.addEventListener('click', () => {
-  isSignUp = !isSignUp;
-  authTitle.innerText = isSignUp ? 'Create Account' : 'Sign In';
-  authSubmitBtn.innerText = isSignUp ? 'Sign Up' : 'Log In';
-  toggleAuthMode.innerText = isSignUp ? 'Already have an account? Log in' : 'Need an account? Sign up';
-});
+// Mock Room Capacity Trackers
+const roomState = {
+  solo: { name: "Solo Practice", maxCapacity: 1, currentCount: 0, type: "solo" },
+  group: { name: "Group Studio", maxCapacity: 5, currentCount: 4, type: "group" }
+};
+
+// --- 1. Registration & Profile Handler ---
 
 authForm.addEventListener('submit', (e) => {
   e.preventDefault();
-  const user = document.getElementById('username').value.trim();
-  const pass = document.getElementById('password').value.trim();
 
-  if (!user || !pass) return;
+  currentUser = {
+    username: document.getElementById('username').value.trim(),
+    prefName: document.getElementById('prefName').value.trim(),
+    pronouns: document.getElementById('pronouns').value.trim(),
+    age: document.getElementById('age').value,
+    tier: document.getElementById('planTier').value
+  };
 
-  const storedUser = localStorage.getItem('bamboo_user_' + user);
-
-  if (isSignUp) {
-    if (storedUser) {
-      alert('Username already exists. Please pick another or log in.');
-      return;
-    }
-    localStorage.setItem('bamboo_user_' + user, JSON.stringify({ password: pass }));
-    alert('Account created successfully! Logging you in...');
-    loginUser(user);
-  } else {
-    if (!storedUser) {
-      alert('User not found. Please sign up first.');
-      return;
-    }
-    const userData = JSON.parse(storedUser);
-    if (userData.password !== pass) {
-      alert('Incorrect password.');
-      return;
-    }
-    loginUser(user);
-  }
+  localStorage.setItem('bamboo_user_profile', JSON.stringify(currentUser));
+  loadProfileUI(currentUser);
 });
 
-function loginUser(username) {
-  localStorage.setItem('bamboo_active_session', username);
-  userDisplay.innerText = username;
+function loadProfileUI(user) {
+  displayName.innerText = user.prefName;
+  displayPronouns.innerText = `(${user.pronouns})`;
+  tierBadge.innerText = user.tier.replace('_', ' ');
+  tierBadge.className = `badge badge-${user.tier}`;
+
   authBox.style.display = 'none';
+  scheduleBox.style.display = 'none';
   studioBox.style.display = 'flex';
 }
 
 logoutBtn.addEventListener('click', () => {
-  localStorage.removeItem('bamboo_active_session');
+  localStorage.removeItem('bamboo_user_profile');
   if (cameraStream) {
     cameraStream.getTracks().forEach(track => track.stop());
   }
   studioBox.style.display = 'none';
   authBox.style.display = 'block';
-  authForm.reset();
 });
 
-// Auto-login on page load if session exists
+// Auto-login on reload
 window.addEventListener('DOMContentLoaded', () => {
-  const activeSession = localStorage.getItem('bamboo_active_session');
-  if (activeSession) {
-    loginUser(activeSession);
+  const savedProfile = localStorage.getItem('bamboo_user_profile');
+  if (savedProfile) {
+    currentUser = JSON.parse(savedProfile);
+    loadProfileUI(currentUser);
   }
 });
 
-// --- 2. Camera & Speech Recognition ---
+// --- 2. Meeting Room Access & Capacity Enforcement ---
 
-startBtn.addEventListener('click', async () => {
+function tryJoinRoom(roomId) {
+  const room = roomState[roomId];
+
+  if (!currentUser) return alert("Please log in first.");
+
+  // Visitor Tier Restriction: Cannot join group rooms
+  if (currentUser.tier === 'visitor' && room.type === 'group') {
+    alert("Visitor tier gives access to Solo Practice rooms and resources only. Upgrade your tier to join Group classes!");
+    return;
+  }
+
+  // Capacity Limit Check
+  if (room.currentCount >= room.maxCapacity) {
+    alert(`The ${room.name} is full! Maximum capacity is ${room.maxCapacity} participant(s).`);
+    return;
+  }
+
+  alert(`Joining ${room.name}...`);
+  videoCanvas.style.display = 'block';
+  startCamera();
+}
+
+// --- 3. Lesson Code & Scheduled Waiting Room Gate ---
+
+joinLessonBtn.addEventListener('click', () => {
+  const code = lessonCodeInput.value.trim().toUpperCase();
+  const lesson = scheduledLessons[code];
+
+  if (!lesson) {
+    alert("Lesson code not found. Please check your code!");
+    return;
+  }
+
+  if (lesson.isOpen) {
+    alert(`Joining ${lesson.title}!`);
+    videoCanvas.style.display = 'block';
+    startCamera();
+  } else {
+    // Show Schedule Waiting Room
+    studioBox.style.display = 'none';
+    document.getElementById('scheduleTitle').innerText = lesson.title;
+    document.getElementById('scheduleTime').innerText = `Scheduled Time: ${lesson.scheduledTime}`;
+    scheduleBox.style.display = 'block';
+  }
+});
+
+function backToStudio() {
+  scheduleBox.style.display = 'none';
+  studioBox.style.display = 'flex';
+}
+
+// --- 4. Camera, Screen Share & Subtitles ---
+
+startCamBtn.addEventListener('click', startCamera);
+
+async function startCamera() {
   try {
     cameraStream = await navigator.mediaDevices.getUserMedia({
       video: { facingMode: "user" },
@@ -91,18 +144,18 @@ startBtn.addEventListener('click', async () => {
     });
     videoElement.srcObject = cameraStream;
     await videoElement.play();
+    videoCanvas.style.display = 'block';
     subtitleElement.innerText = "Camera active! Listening...";
-
-    startSpeechRecognition();
+    startSpeech();
   } catch (err) {
-    alert("Error accessing camera/mic: " + err.message);
+    alert("Camera/Mic error: " + err.message);
   }
-});
+}
 
-function startSpeechRecognition() {
+function startSpeech() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) {
-    subtitleElement.innerText = "Speech recognition is not supported in this browser.";
+    subtitleElement.innerText = "Camera connected! (Speech recognition not available)";
     return;
   }
 
@@ -122,28 +175,20 @@ function startSpeechRecognition() {
   recognition.start();
 }
 
-// --- 3. Screen Sharing Logic ---
-
 shareScreenBtn.addEventListener('click', async () => {
   try {
-    const screenStream = await navigator.mediaDevices.getDisplayMedia({
-      video: true,
-      audio: true
-    });
-
-    // Swap webcam stream with screen share stream
+    const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
     videoElement.srcObject = screenStream;
     await videoElement.play();
     subtitleElement.innerText = "Sharing screen...";
 
-    // Handle user stopping screen share via browser bar
     screenStream.getVideoTracks()[0].onended = () => {
       if (cameraStream) {
         videoElement.srcObject = cameraStream;
-        subtitleElement.innerText = "Returned to camera feed.";
+        subtitleElement.innerText = "Returned to webcam feed.";
       }
     };
   } catch (err) {
-    console.error("Screen share canceled or error:", err);
+    console.error("Screen share canceled:", err);
   }
 });
