@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Bamboo Studio</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #0f172a;
+      color: #f8fafc;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px;
+      margin: 0;
+    }
+    header { text-align: center; margin-bottom: 20px; }
+    h1 { color: #22c55e; margin: 0 0 8px 0; font-size: 2rem; }
+    p { color: #94a3b8; margin: 0; font-size: 1rem; }
+    .video-card {
+      position: relative;
+      width: 100%;
+      max-width: 640px;
+      background: #000000;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+    }
+    video {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    .subtitle-box {
+      position: absolute;
+      bottom: 16px;
+      left: 5%;
+      right: 5%;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #fef08a;
+      font-size: 18px;
+      font-weight: 600;
+      text-align: center;
+      padding: 12px;
+      border-radius: 8px;
+      min-height: 24px;
+    }
+    button {
+      margin-top: 24px;
+      padding: 14px 28px;
+      font-size: 16px;
+      font-weight: 700;
+      background: #22c55e;
+      color: #022c22;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    button:active { transform: scale(0.98); }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>The Bamboo Studio</h1>
+    <p>Virtual Dizi in D Lessons & Live Subtitles</p>
+  </header>
+
+  <div class="video-card">
+    <video id="webcam" autoplay playsinline muted></video>
+    <div id="subtitles" class="subtitle-box">Tap "Start Studio" to activate camera & subtitles...</div>
+  </div>
+
+  <button id="startBtn">Start Studio</button>
+
+  <script src="app.js"></script>
+</body>
+</html>
