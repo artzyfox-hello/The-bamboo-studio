@@ -89,7 +89,11 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   function checkTrialAndRoute(user) {
-    authBox.style.display = 'none';
+    if (!user) return;
+
+    // Default missing properties safely
+    user.tier = user.tier || 'visitor';
+    user.trialEndDate = user.trialEndDate || new Date(Date.now() + 30 * 86400000).toISOString();
 
     if (user.tier === 'teacher' || user.isPaid) {
       loadStudioUI(user);
@@ -100,10 +104,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const trialExpiration = new Date(user.trialEndDate);
 
     if (now > trialExpiration && user.tier !== 'visitor') {
+      authBox.style.display = 'none';
       paymentBox.style.display = 'block';
       studioBox.style.display = 'none';
     } else {
-      const daysLeft = Math.ceil((trialExpiration - now) / (1000 * 60 * 60 * 24));
+      const daysLeft = Math.max(0, Math.ceil((trialExpiration - now) / (1000 * 60 * 60 * 24)));
       trialCountdown.innerText = `30-Day Free Trial: ${daysLeft} days remaining`;
       loadStudioUI(user);
     }
@@ -119,10 +124,14 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function loadStudioUI(user) {
-    displayName.innerText = user.prefName;
-    displayPronouns.innerText = `(${user.pronouns})`;
-    tierBadge.innerText = user.tier.replace('_', ' ');
-    tierBadge.className = `badge badge-${user.tier}`;
+    authBox.style.display = 'none';
+    
+    const safeTier = user.tier || 'visitor';
+    displayName.innerText = user.prefName || user.username || "User";
+    displayPronouns.innerText = `(${user.pronouns || 'they/them'})`;
+    tierBadge.innerText = safeTier.replace('_', ' ');
+    tierBadge.className = `badge badge-${safeTier}`;
+    
     studioBox.style.display = 'flex';
   }
 
@@ -133,7 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('joinSoloBtn').addEventListener('click', () => alert('Joining Solo Practice...'));
   document.getElementById('joinGroupBtn').addEventListener('click', () => {
-    if (currentUser.tier === 'visitor') {
+    if (currentUser && currentUser.tier === 'visitor') {
       alert("Visitor tier gives access to Solo Practice rooms only.");
     } else {
       alert('Joining Group Studio...');
@@ -148,13 +157,18 @@ document.addEventListener('DOMContentLoaded', () => {
     authForm.reset();
   });
 
-  // Check Session
-  const activeUser = localStorage.getItem('bamboo_active_session');
-  if (activeUser) {
-    const storedData = localStorage.getItem('bamboo_user_' + activeUser);
-    if (storedData) {
-      currentUser = JSON.parse(storedData);
-      checkTrialAndRoute(currentUser);
+  // Auto-login session loader
+  try {
+    const activeUser = localStorage.getItem('bamboo_active_session');
+    if (activeUser) {
+      const storedData = localStorage.getItem('bamboo_user_' + activeUser);
+      if (storedData) {
+        currentUser = JSON.parse(storedData);
+        checkTrialAndRoute(currentUser);
+      }
     }
+  } catch (err) {
+    console.error("Session load failed, clearing session.", err);
+    localStorage.removeItem('bamboo_active_session');
   }
 });
