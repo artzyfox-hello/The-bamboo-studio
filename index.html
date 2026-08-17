@@ -19,7 +19,6 @@
     h1 { color: #22c55e; margin: 0 0 6px 0; font-size: 2rem; }
     p { color: #94a3b8; margin: 0; }
 
-    /* Auth & Profile Container */
     .card-box {
       background: #1e293b;
       padding: 24px;
@@ -43,7 +42,6 @@
       box-sizing: border-box;
     }
     
-    /* Studio Dashboard */
     .studio-container {
       display: none;
       flex-direction: column;
@@ -71,9 +69,26 @@
     .badge-visitor { background: #64748b; color: white; }
     .badge-student { background: #3b82f6; color: white; }
     .badge-student_plus { background: #8b5cf6; color: white; }
+    .badge-save_and_play { background: #f59e0b; color: white; }
     .badge-teacher { background: #22c55e; color: #022c22; }
 
-    /* Room Cards */
+    /* Plan Pricing Cards */
+    .plan-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 14px;
+    }
+    .plan-card {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 12px;
+      text-align: center;
+    }
+    .plan-card h3 { margin: 0 0 6px 0; font-size: 1rem; color: #22c55e; }
+    .plan-card .price { font-size: 1.1rem; font-weight: bold; color: #f8fafc; margin-bottom: 8px; }
+
     .room-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -88,9 +103,7 @@
       padding: 12px;
       text-align: center;
     }
-    .room-card h4 { margin: 0 0 6px 0; color: #22c55e; }
 
-    /* Video Player */
     .video-card {
       position: relative;
       width: 100%;
@@ -148,7 +161,7 @@
         <input type="password" id="password" required>
       </div>
 
-      <!-- Extra Registration Fields (Hidden in Sign In Mode) -->
+      <!-- Sign Up Specific Fields -->
       <div id="signUpFields" style="display: none;">
         <div class="form-group">
           <label for="prefName">Preferred Name</label>
@@ -163,14 +176,17 @@
           <input type="number" id="age" min="5" max="100">
         </div>
         <div class="form-group">
-          <label for="planTier">Select Plan</label>
+          <label for="planTier">Select Initial Plan (Includes 30-Day Free Trial)</label>
           <select id="planTier">
-            <option value="visitor">Visitor ($0 - Sheet Music & 2-wk Trial)</option>
             <option value="student">Student ($25/hr + Beginner Lessons)</option>
             <option value="student_plus">Student Plus ($35/hr + Extended Lessons)</option>
             <option value="save_and_play">Save & Play (Asynchronous Video Feedback)</option>
-            <option value="teacher">Teacher (Staff Access)</option>
+            <option value="visitor">Visitor ($0 - Resources Only)</option>
           </select>
+        </div>
+        <div class="form-group">
+          <label for="teacherCode">Teacher Passcode (Staff Only)</label>
+          <input type="password" id="teacherCode" placeholder="Leave blank if student">
         </div>
       </div>
 
@@ -182,22 +198,54 @@
     </p>
   </div>
 
+  <!-- Plan Selection / Payment Gate Page -->
+  <div id="paymentBox" class="card-box" style="display: none; max-width: 560px;">
+    <h2>30-Day Trial Ended</h2>
+    <p style="font-size: 0.9rem; color: #94a3b8;">Your 30-day free trial has expired. Select a membership plan to continue your Dizi lessons:</p>
+    
+    <div class="plan-grid">
+      <div class="plan-card">
+        <h3>Student</h3>
+        <div class="price">$25 / hr</div>
+        <p style="font-size: 0.75rem; color: #cbd5e1;">Live beginner lessons & practice rooms.</p>
+        <button onclick="selectPlanPayment('student')" style="width: 100%;">Select Student</button>
+      </div>
+      <div class="plan-card">
+        <h3>Student Plus</h3>
+        <div class="price">$35 / hr</div>
+        <p style="font-size: 0.75rem; color: #cbd5e1;">Extended individual lessons & group access.</p>
+        <button onclick="selectPlanPayment('student_plus')" style="width: 100%;">Select Plus</button>
+      </div>
+      <div class="plan-card">
+        <h3>Save & Play</h3>
+        <div class="price">Async Review</div>
+        <p style="font-size: 0.75rem; color: #cbd5e1;">Upload practice recordings for review.</p>
+        <button onclick="selectPlanPayment('save_and_play')" style="width: 100%;">Select Async</button>
+      </div>
+      <div class="plan-card">
+        <h3>Visitor</h3>
+        <p style="font-size: 0.75rem; color: #cbd5e1;">Free sheet music & Jianpu resources.</p>
+        <button onclick="selectPlanPayment('visitor')" class="secondary" style="width: 100%;">Continue Free</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Studio Dashboard & Video Space -->
   <div id="studioBox" class="studio-container">
     
-    <!-- Profile Banner -->
     <div class="profile-bar">
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <div>
           <strong id="displayName">Preferred Name</strong> 
           <span id="displayPronouns" style="color: #94a3b8; font-size: 0.85rem;">(pronouns)</span>
           <span id="tierBadge" class="badge">PLAN</span>
+          <div id="trialCountdown" style="font-size: 0.75rem; color: #fef08a; margin-top: 2px;"></div>
         </div>
         <button id="logoutBtn" class="danger" style="padding: 4px 8px; font-size: 11px;">Log Out</button>
       </div>
     </div>
 
-    <!-- Scheduled Lesson Code Search -->
+    <!-- Lesson Code Verification -->
     <div class="card-box" style="max-width: 100%; padding: 14px; margin-bottom: 16px;">
       <h4 style="margin: 0 0 8px 0; color: #22c55e;">Join Scheduled Lesson</h4>
       <div style="display: flex; gap: 8px;">
@@ -206,7 +254,7 @@
       </div>
     </div>
 
-    <!-- Practice & Meeting Rooms Grid -->
+    <!-- Practice Rooms Grid -->
     <h4 style="margin: 0 0 10px 0; align-self: flex-start; color: #22c55e;">Available Practice Rooms</h4>
     <div class="room-grid">
       <div class="room-card">
@@ -231,14 +279,6 @@
       <button id="startCamBtn">Start Studio Camera</button>
       <button id="shareScreenBtn" class="secondary">Share Screen</button>
     </div>
-  </div>
-
-  <!-- Waiting Room / Schedule View (If Lesson Closed) -->
-  <div id="scheduleBox" class="card-box" style="display: none; text-align: center;">
-    <h2 style="color: #fef08a;">Lesson Not Open Yet</h2>
-    <p id="scheduleTitle" style="color: #ffffff; font-weight: bold;"></p>
-    <p id="scheduleTime" style="color: #94a3b8;"></p>
-    <button onclick="backToStudio()" class="secondary">Back to Dashboard</button>
   </div>
 
   <script src="app.js"></script>
