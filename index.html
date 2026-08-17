@@ -135,38 +135,51 @@
     <p>Virtual Dizi Lessons & Practice Space</p>
   </header>
 
-  <!-- Registration / Profile Setup -->
+  <!-- Login & Profile Setup Box -->
   <div id="authBox" class="card-box">
-    <h2>Sign Up & Create Profile</h2>
+    <h2 id="authTitle">Sign In</h2>
     <form id="authForm">
       <div class="form-group">
         <label for="username">Username</label>
         <input type="text" id="username" required>
       </div>
       <div class="form-group">
-        <label for="prefName">Preferred Name</label>
-        <input type="text" id="prefName" placeholder="e.g. Jaxx" required>
+        <label for="password">Password</label>
+        <input type="password" id="password" required>
       </div>
-      <div class="form-group">
-        <label for="pronouns">Pronouns</label>
-        <input type="text" id="pronouns" placeholder="e.g. they/them" required>
+
+      <!-- Extra Registration Fields (Hidden in Sign In Mode) -->
+      <div id="signUpFields" style="display: none;">
+        <div class="form-group">
+          <label for="prefName">Preferred Name</label>
+          <input type="text" id="prefName" placeholder="e.g. Jaxx">
+        </div>
+        <div class="form-group">
+          <label for="pronouns">Pronouns</label>
+          <input type="text" id="pronouns" placeholder="e.g. they/them">
+        </div>
+        <div class="form-group">
+          <label for="age">Age</label>
+          <input type="number" id="age" min="5" max="100">
+        </div>
+        <div class="form-group">
+          <label for="planTier">Select Plan</label>
+          <select id="planTier">
+            <option value="visitor">Visitor ($0 - Sheet Music & 2-wk Trial)</option>
+            <option value="student">Student ($25/hr + Beginner Lessons)</option>
+            <option value="student_plus">Student Plus ($35/hr + Extended Lessons)</option>
+            <option value="save_and_play">Save & Play (Asynchronous Video Feedback)</option>
+            <option value="teacher">Teacher (Staff Access)</option>
+          </select>
+        </div>
       </div>
-      <div class="form-group">
-        <label for="age">Age</label>
-        <input type="number" id="age" min="5" max="100" required>
-      </div>
-      <div class="form-group">
-        <label for="planTier">Select Plan</label>
-        <select id="planTier">
-          <option value="visitor">Visitor ($0 - Sheet Music & 2-wk Trial)</option>
-          <option value="student">Student ($25/hr + Beginner Lessons)</option>
-          <option value="student_plus">Student Plus ($35/hr + Extended Lessons)</option>
-          <option value="save_and_play">Save & Play (Asynchronous Video Feedback)</option>
-          <option value="teacher">Teacher (Staff Access)</option>
-        </select>
-      </div>
-      <button type="submit" style="width: 100%;">Enter Studio</button>
+
+      <button type="submit" style="width: 100%; margin-top: 10px;" id="authSubmitBtn">Log In</button>
     </form>
+    
+    <p style="text-align: center; font-size: 0.85rem; margin-top: 14px; color: #94a3b8;">
+      <span id="toggleAuth" style="color: #22c55e; cursor: pointer; text-decoration: underline;">Need an account? Sign up</span>
+    </p>
   </div>
 
   <!-- Studio Dashboard & Video Space -->
