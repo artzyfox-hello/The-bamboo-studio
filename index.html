@@ -19,20 +19,21 @@
     h1 { color: #22c55e; margin: 0 0 6px 0; font-size: 2rem; }
     p { color: #94a3b8; margin: 0; }
 
-    /* Auth Box Styling */
-    .auth-container {
+    /* Auth & Profile Container */
+    .card-box {
       background: #1e293b;
       padding: 24px;
       border-radius: 12px;
       width: 100%;
-      max-width: 360px;
+      max-width: 480px;
       box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5);
       margin-bottom: 20px;
+      box-sizing: border-box;
     }
-    .auth-container h2 { margin-top: 0; color: #22c55e; font-size: 1.25rem; }
+    .card-box h2 { margin-top: 0; color: #22c55e; font-size: 1.25rem; }
     .form-group { margin-bottom: 14px; }
     .form-group label { display: block; font-size: 0.85rem; color: #cbd5e1; margin-bottom: 4px; }
-    .form-group input {
+    .form-group input, .form-group select {
       width: 100%;
       padding: 10px;
       border-radius: 6px;
@@ -41,35 +42,61 @@
       color: white;
       box-sizing: border-box;
     }
-    .auth-toggle { font-size: 0.85rem; color: #94a3b8; margin-top: 12px; text-align: center; }
-    .auth-toggle span { color: #22c55e; cursor: pointer; text-decoration: underline; }
-
-    /* Video Studio Styling */
+    
+    /* Studio Dashboard */
     .studio-container {
-      display: none; /* Hidden until logged in */
+      display: none;
       flex-direction: column;
       align-items: center;
       width: 100%;
       max-width: 640px;
     }
-    .user-bar {
+    .profile-bar {
       width: 100%;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
       background: #1e293b;
-      padding: 10px 16px;
-      border-radius: 8px;
+      padding: 14px;
+      border-radius: 10px;
+      margin-bottom: 16px;
       box-sizing: border-box;
     }
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: bold;
+      text-transform: uppercase;
+      margin-left: 6px;
+    }
+    .badge-visitor { background: #64748b; color: white; }
+    .badge-student { background: #3b82f6; color: white; }
+    .badge-student_plus { background: #8b5cf6; color: white; }
+    .badge-teacher { background: #22c55e; color: #022c22; }
+
+    /* Room Cards */
+    .room-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      width: 100%;
+      margin-bottom: 16px;
+    }
+    .room-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 12px;
+      text-align: center;
+    }
+    .room-card h4 { margin: 0 0 6px 0; color: #22c55e; }
+
+    /* Video Player */
     .video-card {
       position: relative;
       width: 100%;
       background: #000000;
       border-radius: 16px;
       overflow: hidden;
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
     }
     video { width: 100%; height: auto; display: block; }
     .subtitle-box {
@@ -84,12 +111,12 @@
       text-align: center;
       padding: 12px;
       border-radius: 8px;
-      min-height: 24px;
     }
-    .controls { display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap; justify-content: center; }
+
+    .controls { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; justify-content: center; }
     button {
-      padding: 12px 20px;
-      font-size: 15px;
+      padding: 10px 18px;
+      font-size: 14px;
       font-weight: 600;
       background: #22c55e;
       color: #022c22;
@@ -105,44 +132,100 @@
 
   <header>
     <h1>The Bamboo Studio</h1>
-    <p>Virtual Dizi Lessons & Live Subtitles</p>
+    <p>Virtual Dizi Lessons & Practice Space</p>
   </header>
 
-  <!-- Login / Signup Section -->
-  <div id="authBox" class="auth-container">
-    <h2 id="authTitle">Sign In</h2>
+  <!-- Registration / Profile Setup -->
+  <div id="authBox" class="card-box">
+    <h2>Sign Up & Create Profile</h2>
     <form id="authForm">
       <div class="form-group">
         <label for="username">Username</label>
         <input type="text" id="username" required>
       </div>
       <div class="form-group">
-        <label for="password">Password</label>
-        <input type="password" id="password" required>
+        <label for="prefName">Preferred Name</label>
+        <input type="text" id="prefName" placeholder="e.g. Jaxx" required>
       </div>
-      <button type="submit" style="width: 100%;" id="authSubmitBtn">Log In</button>
+      <div class="form-group">
+        <label for="pronouns">Pronouns</label>
+        <input type="text" id="pronouns" placeholder="e.g. they/them" required>
+      </div>
+      <div class="form-group">
+        <label for="age">Age</label>
+        <input type="number" id="age" min="5" max="100" required>
+      </div>
+      <div class="form-group">
+        <label for="planTier">Select Plan</label>
+        <select id="planTier">
+          <option value="visitor">Visitor ($0 - Sheet Music & 2-wk Trial)</option>
+          <option value="student">Student ($25/hr + Beginner Lessons)</option>
+          <option value="student_plus">Student Plus ($35/hr + Extended Lessons)</option>
+          <option value="save_and_play">Save & Play (Asynchronous Video Feedback)</option>
+          <option value="teacher">Teacher (Staff Access)</option>
+        </select>
+      </div>
+      <button type="submit" style="width: 100%;">Enter Studio</button>
     </form>
-    <div class="auth-toggle">
-      <span id="toggleAuthMode">Need an account? Sign up</span>
-    </div>
   </div>
 
-  <!-- Studio Video Section -->
+  <!-- Studio Dashboard & Video Space -->
   <div id="studioBox" class="studio-container">
-    <div class="user-bar">
-      <span>Welcome, <strong id="userDisplay">Student</strong>!</span>
-      <button id="logoutBtn" class="danger" style="padding: 6px 12px; font-size: 12px;">Log Out</button>
+    
+    <!-- Profile Banner -->
+    <div class="profile-bar">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <strong id="displayName">Preferred Name</strong> 
+          <span id="displayPronouns" style="color: #94a3b8; font-size: 0.85rem;">(pronouns)</span>
+          <span id="tierBadge" class="badge">PLAN</span>
+        </div>
+        <button id="logoutBtn" class="danger" style="padding: 4px 8px; font-size: 11px;">Log Out</button>
+      </div>
     </div>
 
-    <div class="video-card">
+    <!-- Scheduled Lesson Code Search -->
+    <div class="card-box" style="max-width: 100%; padding: 14px; margin-bottom: 16px;">
+      <h4 style="margin: 0 0 8px 0; color: #22c55e;">Join Scheduled Lesson</h4>
+      <div style="display: flex; gap: 8px;">
+        <input type="text" id="lessonCodeInput" placeholder="Enter Lesson Code (e.g. LESSON-101)" style="flex: 1; padding: 8px; border-radius: 6px; background: #0f172a; color: white; border: 1px solid #334155;">
+        <button id="joinLessonBtn">Join</button>
+      </div>
+    </div>
+
+    <!-- Practice & Meeting Rooms Grid -->
+    <h4 style="margin: 0 0 10px 0; align-self: flex-start; color: #22c55e;">Available Practice Rooms</h4>
+    <div class="room-grid">
+      <div class="room-card">
+        <h4>Solo Practice</h4>
+        <p style="font-size: 12px; color: #94a3b8; margin: 4px 0;">Max 1 Person</p>
+        <button onclick="tryJoinRoom('solo')" class="secondary" style="width: 100%;">Join Solo</button>
+      </div>
+      <div class="room-card">
+        <h4>Group Studio</h4>
+        <p style="font-size: 12px; color: #94a3b8; margin: 4px 0;">Max 5 People</p>
+        <button onclick="tryJoinRoom('group')" class="secondary" style="width: 100%;">Join Group</button>
+      </div>
+    </div>
+
+    <!-- Video Canvas -->
+    <div id="videoCanvas" class="video-card" style="display: none;">
       <video id="webcam" autoplay playsinline muted></video>
-      <div id="subtitles" class="subtitle-box">Tap "Start Studio" to begin...</div>
+      <div id="subtitles" class="subtitle-box">Camera loading...</div>
     </div>
 
     <div class="controls">
-      <button id="startBtn">Start Camera</button>
+      <button id="startCamBtn">Start Studio Camera</button>
       <button id="shareScreenBtn" class="secondary">Share Screen</button>
     </div>
+  </div>
+
+  <!-- Waiting Room / Schedule View (If Lesson Closed) -->
+  <div id="scheduleBox" class="card-box" style="display: none; text-align: center;">
+    <h2 style="color: #fef08a;">Lesson Not Open Yet</h2>
+    <p id="scheduleTitle" style="color: #ffffff; font-weight: bold;"></p>
+    <p id="scheduleTime" style="color: #94a3b8;"></p>
+    <button onclick="backToStudio()" class="secondary">Back to Dashboard</button>
   </div>
 
   <script src="app.js"></script>
