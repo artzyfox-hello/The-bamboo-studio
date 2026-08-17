@@ -72,7 +72,6 @@
     .badge-save_and_play { background: #f59e0b; color: white; }
     .badge-teacher { background: #22c55e; color: #022c22; }
 
-    /* Plan Pricing Cards */
     .plan-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -104,29 +103,6 @@
       text-align: center;
     }
 
-    .video-card {
-      position: relative;
-      width: 100%;
-      background: #000000;
-      border-radius: 16px;
-      overflow: hidden;
-    }
-    video { width: 100%; height: auto; display: block; }
-    .subtitle-box {
-      position: absolute;
-      bottom: 16px;
-      left: 5%;
-      right: 5%;
-      background: rgba(15, 23, 42, 0.85);
-      color: #fef08a;
-      font-size: 18px;
-      font-weight: 600;
-      text-align: center;
-      padding: 12px;
-      border-radius: 8px;
-    }
-
-    .controls { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; justify-content: center; }
     button {
       padding: 10px 18px;
       font-size: 14px;
@@ -165,7 +141,7 @@
       <div id="signUpFields" style="display: none;">
         <div class="form-group">
           <label for="prefName">Preferred Name</label>
-          <input type="text" id="prefName" placeholder="e.g. Jaxx">
+          <input type="text" id="prefName" placeholder="e.g. Preferred Name">
         </div>
         <div class="form-group">
           <label for="pronouns">Pronouns</label>
@@ -207,32 +183,28 @@
       <div class="plan-card">
         <h3>Student</h3>
         <div class="price">$25 / hr</div>
-        <p style="font-size: 0.75rem; color: #cbd5e1;">Live beginner lessons & practice rooms.</p>
-        <button onclick="selectPlanPayment('student')" style="width: 100%;">Select Student</button>
+        <button id="payStudentBtn" style="width: 100%;">Select Student</button>
       </div>
       <div class="plan-card">
         <h3>Student Plus</h3>
         <div class="price">$35 / hr</div>
-        <p style="font-size: 0.75rem; color: #cbd5e1;">Extended individual lessons & group access.</p>
-        <button onclick="selectPlanPayment('student_plus')" style="width: 100%;">Select Plus</button>
+        <button id="payPlusBtn" style="width: 100%;">Select Plus</button>
       </div>
       <div class="plan-card">
         <h3>Save & Play</h3>
         <div class="price">Async Review</div>
-        <p style="font-size: 0.75rem; color: #cbd5e1;">Upload practice recordings for review.</p>
-        <button onclick="selectPlanPayment('save_and_play')" style="width: 100%;">Select Async</button>
+        <button id="payAsyncBtn" style="width: 100%;">Select Async</button>
       </div>
       <div class="plan-card">
         <h3>Visitor</h3>
-        <p style="font-size: 0.75rem; color: #cbd5e1;">Free sheet music & Jianpu resources.</p>
-        <button onclick="selectPlanPayment('visitor')" class="secondary" style="width: 100%;">Continue Free</button>
+        <div class="price">$0</div>
+        <button id="payVisitorBtn" class="secondary" style="width: 100%;">Continue Free</button>
       </div>
     </div>
   </div>
 
-  <!-- Studio Dashboard & Video Space -->
+  <!-- Studio Dashboard -->
   <div id="studioBox" class="studio-container">
-    
     <div class="profile-bar">
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <div>
@@ -245,39 +217,18 @@
       </div>
     </div>
 
-    <!-- Lesson Code Verification -->
-    <div class="card-box" style="max-width: 100%; padding: 14px; margin-bottom: 16px;">
-      <h4 style="margin: 0 0 8px 0; color: #22c55e;">Join Scheduled Lesson</h4>
-      <div style="display: flex; gap: 8px;">
-        <input type="text" id="lessonCodeInput" placeholder="Enter Lesson Code (e.g. LESSON-101)" style="flex: 1; padding: 8px; border-radius: 6px; background: #0f172a; color: white; border: 1px solid #334155;">
-        <button id="joinLessonBtn">Join</button>
-      </div>
-    </div>
-
-    <!-- Practice Rooms Grid -->
     <h4 style="margin: 0 0 10px 0; align-self: flex-start; color: #22c55e;">Available Practice Rooms</h4>
     <div class="room-grid">
       <div class="room-card">
         <h4>Solo Practice</h4>
         <p style="font-size: 12px; color: #94a3b8; margin: 4px 0;">Max 1 Person</p>
-        <button onclick="tryJoinRoom('solo')" class="secondary" style="width: 100%;">Join Solo</button>
+        <button id="joinSoloBtn" class="secondary" style="width: 100%;">Join Solo</button>
       </div>
       <div class="room-card">
         <h4>Group Studio</h4>
         <p style="font-size: 12px; color: #94a3b8; margin: 4px 0;">Max 5 People</p>
-        <button onclick="tryJoinRoom('group')" class="secondary" style="width: 100%;">Join Group</button>
+        <button id="joinGroupBtn" class="secondary" style="width: 100%;">Join Group</button>
       </div>
-    </div>
-
-    <!-- Video Canvas -->
-    <div id="videoCanvas" class="video-card" style="display: none;">
-      <video id="webcam" autoplay playsinline muted></video>
-      <div id="subtitles" class="subtitle-box">Camera loading...</div>
-    </div>
-
-    <div class="controls">
-      <button id="startCamBtn">Start Studio Camera</button>
-      <button id="shareScreenBtn" class="secondary">Share Screen</button>
     </div>
   </div>
 
